@@ -2,7 +2,7 @@
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><title>식물 MBTI 테스트 · J LAB</title>
 <meta property="og:type" content="website">
 <meta property="og:title" content="식물 MBTI 테스트 · J LAB">
-<meta property="og:description" content="당신과 닮은 식물은? 20개의 질문으로 나와 닮은 식물을 찾아보세요!">
+<meta property="og:description" content="당신과 닮은 식물은? 12개의 질문으로 나와 닮은 식물을 찾아보세요!">
 <meta property="og:url" content="https://jlab92.github.io/j_lab/">
 <meta property="og:image" content="https://jlab92.github.io/j_lab/assets/og-thumbnail.png">
 <meta property="og:image:secure_url" content="https://jlab92.github.io/j_lab/assets/og-thumbnail.png">
@@ -11,7 +11,7 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="식물 MBTI 테스트 · J LAB">
-<meta name="twitter:description" content="당신과 닮은 식물은? 20개의 질문으로 나와 닮은 식물을 찾아보세요!">
+<meta name="twitter:description" content="당신과 닮은 식물은? 12개의 질문으로 나와 닮은 식물을 찾아보세요!">
 <meta name="twitter:image" content="https://jlab92.github.io/j_lab/assets/og-thumbnail.png">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap');
@@ -110,9 +110,9 @@ html,body{height:100%;overflow-x:hidden}.app{min-height:100dvh}.screen:not(#resu
 <p class="subtitle">당신의 성격과 닮은 식물을 찾아드려요!</p>
 <div class="hero-plants"><div class="grass-strip"></div><img class="m" src="assets/characters/monstera.png"><img class="s" src="assets/characters/sunflower.png"><img class="f" src="assets/characters/freesia.png"></div>
 <button class="primary" onclick="startQuiz()">테스트 시작하기 〉</button>
-<div class="mini-grid"><div class="mini">🌱<b>총 20문항</b>간단한 선택으로 알아보는 나!</div><div class="mini">💗<b>16가지 식물 유형</b>귀여운 캐릭터와 함께!</div><div class="mini">✨<b>나만의 식물 성격</b>강점과 매력을 확인!</div><div class="mini">🌿<b>식물 궁합까지</b>잘 맞는 친구도 알려드려요!</div></div><div class="footnote">작은 식물이 만드는 더 특별한 하루 🌱</div>
+<div class="mini-grid"><div class="mini">🌱<b>총 12문항</b>간단한 선택으로 알아보는 나!</div><div class="mini">💗<b>16가지 식물 유형</b>귀여운 캐릭터와 함께!</div><div class="mini">✨<b>나만의 식물 성격</b>강점과 매력을 확인!</div><div class="mini">🌿<b>식물 궁합까지</b>잘 맞는 친구도 알려드려요!</div></div><div class="footnote">작은 식물이 만드는 더 특별한 하루 🌱</div>
 </section>
-<section id="quiz" class="screen"><div class="topbar"><button class="back" onclick="prevQ()">‹</button><div class="counter"><span id="qnum">1</span> / 20</div></div><div class="progress"><i id="prog"></i></div><div class="quiz-wrap"><h2 id="qtitle" class="qtitle"></h2><div id="answers" class="answers"></div><div class="quiz-footer">© J LAB · Plant MBTI</div></div></section>
+<section id="quiz" class="screen"><div class="topbar"><button class="back" onclick="prevQ()">‹</button><div class="counter"><span id="qnum">1</span> / <span id="qtotal">12</span></div></div><div class="progress"><i id="prog"></i></div><div class="quiz-wrap"><h2 id="qtitle" class="qtitle"></h2><div id="answers" class="answers"></div><div class="quiz-footer">© J LAB · Plant MBTI</div></div></section>
 <section id="loading" class="screen"><img class="decor" style="width:45px;left:20px;top:370px" src="assets/decorations/heart_01.png"><img class="decor" style="width:38px;right:22px;top:430px" src="assets/decorations/sparkle_01.png"><img class="decor cloud1" src="assets/decorations/cloud_01.png"><img class="decor cloud2" src="assets/decorations/cloud_02.png"><div class="loading-center"><div class="loading-brand">J LAB</div><h2>결과를 열심히<br>분석 중이에요...</h2><p>당신의 답변을 바탕으로<br>딱 맞는 식물을 찾고 있어요!</p><div class="run-scene"><img src="assets/ui/runner_girl_dog.png" alt="식물을 찾아 달리는 캐릭터"></div><div class="loadbar"><i></i></div><div class="percent" id="pct">0%</div><div class="loading-note" id="loadnote">조금만 더 기다려주세요!</div></div></section>
 <section id="result" class="screen"><div class="topbar"><div class="brand brand-text">J LAB</div><button class="back" onclick="goStart()">⌂</button></div><div id="resultContent"></div></section>
 </main>
@@ -126,18 +126,11 @@ const Q=[
 ['할 일이 한꺼번에 몰렸을 때 나는?','해야 할 일을 정리하고 순서를 정한다.','일단 지금 손에 잡히는 것부터 시작한다.','J','P'],
 ['친구가 중요한 결정을 앞두고 의견을 묻는다.','장단점과 현실적인 조건을 같이 따져본다.','어떤 선택이 친구를 더 행복하게 할지 생각해본다.','T','F'],
 ['새로운 기기의 설명서를 볼 때 나는?','구체적인 예시와 사용법부터 확인한다.','전체적인 원리를 이해한 뒤 세부 기능을 익힌다.','S','N'],
-['즐거운 모임이 끝난 뒤 나는?','아쉬워서 이야기를 조금 더 하고 싶다.','이제는 조용히 혼자 있는 시간이 필요하다.','E','I'],
-['가고 싶던 맛집의 대기 시간이 1시간이라면?','원래 계획한 곳이니 기다려서 먹는다.','근처의 괜찮아 보이는 다른 곳으로 바꾼다.','J','P'],
-['친구가 함께 준비한 일에서 실수했다.','어디서 문제가 생겼는지 먼저 확인한다.','친구가 너무 자책하고 있지는 않은지 먼저 살핀다.','T','F'],
-['누군가 엉뚱한 사업 아이디어를 이야기한다.','실제로 하려면 비용과 준비가 얼마나 필요할지 생각한다.','잘되면 이것도 저것도 가능하겠다며 상상이 이어진다.','S','N'],
-['새롭게 관심 가는 것이 생기면 나는?','주변 사람에게 이야기하고 같이 할 사람을 찾아본다.','혼자 이것저것 찾아보며 깊이 빠져든다.','E','I'],
-['한 달 뒤 중요한 일정이 있다면?','지금부터 조금씩 준비해두는 편이다.','날짜가 가까워졌을 때 집중해서 준비하는 편이다.','J','P'],
-['친구 둘이 싸우고 내 의견을 묻는다.','누구의 말이 더 근거가 있는지 생각해본다.','양쪽이 왜 그렇게 느꼈는지 먼저 생각해본다.','T','F'],
-['영화를 본 뒤 이야기할 때 나는?','기억에 남는 장면이나 실제 내용에 대해 이야기한다.','영화의 의미나 숨은 설정에 대해 이야기하는 게 재미있다.','S','N'],
 ['정신없는 한 주가 끝난 금요일 밤, 나는?','좋아하는 사람을 만나 떠들면서 스트레스를 푼다.','혼자 조용히 쉬면서 에너지를 충전한다.','E','I'],
 ['내일 갑자기 하루 휴가가 생겼다.','오늘 대략 무엇을 할지 정해둔다.','내일 일어나서 그때 하고 싶은 걸 정한다.','J','P'],
 ['나와 정반대의 의견을 가진 사람을 만났다.','왜 그렇게 생각하는지 근거가 궁금하다.','왜 그렇게 느끼게 됐는지 그 사람의 이유가 궁금하다.','T','F'],
-['새로운 장소에 다녀온 뒤 기억에 남는 것은?','음식, 풍경, 있었던 일 같은 구체적인 경험이다.','그곳의 분위기와 떠오른 생각이나 이미지다.','S','N']];
+['새로운 장소에 다녀온 뒤 기억에 남는 것은?','음식, 풍경, 있었던 일 같은 구체적인 경험이다.','그곳의 분위기와 떠오른 생각이나 이미지다.','S','N']
+];
 const R={
 INTJ:{plant:'올리브나무',img:'olive_tree.png',title:'조용한 전략가',catch:'서두르지 않아도 괜찮아. 나는 내가 갈 방향을 알고 있으니까.',traits:['통찰','계획','단단함'],good:'ENFP',bad:'ESFP',desc:[`올리브나무는 천천히 자라지만 시간이 흐를수록 단단한 모습을 갖춰가는 식물이에요. 당신도 올리브나무처럼 <strong>자신만의 기준과 방향을 가지고 움직이는 사람</strong>이에요. 당장의 결과보다 앞으로 어떻게 될지를 생각하며 계획하는 편이에요.`,`혼자 생각하고 판단할 시간을 중요하게 여기고, 충분히 고민한 뒤 움직여요. 복잡한 문제에서도 핵심을 찾아 <strong>자신만의 방식으로 정리하는 힘</strong>이 있어요.`,`머릿속에서 이미 여러 단계를 생각한 뒤 말하다 보니 주변이 따라가기 어려울 때도 있어요. 결론뿐 아니라 과정도 조금 나눈다면 <strong>단단함에 여유까지 더해질 거예요.</strong>`]},
 INTP:{plant:'유칼립투스',img:'eucalyptus.png',title:'호기심 많은 탐구자',catch:'남들이 그냥 지나치는 것도 나는 한 번 더 궁금해.',traits:['호기심','논리','아이디어'],good:'ENTJ',bad:'ESFJ',desc:[`유칼립투스처럼 조용해 보여도 머릿속에는 생각이 끊임없이 자라나요. 익숙한 것에도 <strong>“왜?”라는 질문을 던지고 원리를 이해하려는 사람</strong>이에요.`,`관심이 생긴 분야라면 시간 가는 줄 모르고 깊게 파고들어요. 남들이 정해둔 방식보다 <strong>더 효율적이고 흥미로운 방법</strong>을 찾아내는 데 재미를 느껴요.`,`좋은 아이디어가 많지만 머릿속에만 머물 때도 있어요. 완벽한 답을 기다리기보다 작은 것부터 시작하면 <strong>생각이 훨씬 멋진 결과로 이어질 수 있어요.</strong>`]},
@@ -160,8 +153,8 @@ const badCopy={INTJ:'튤립은 현재의 즐거움과 즉흥적인 경험을 중
 let idx=0, scores={E:0,I:0,S:0,N:0,T:0,F:0,J:0,P:0},history=[];
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');scrollTo(0,0)}
 function startQuiz(){idx=0;scores={E:0,I:0,S:0,N:0,T:0,F:0,J:0,P:0};history=[];show('quiz');renderQ()}
-function renderQ(){let q=Q[idx];qnum.textContent=idx+1;prog.style.width=((idx+1)/20*100)+'%';qtitle.textContent=q[0];answers.innerHTML=`<button class="answer" onclick="choose(0)"><span class="letter">A</span><span class="atext">${q[1]}</span></button><button class="answer" onclick="choose(1)"><span class="letter">B</span><span class="atext">${q[2]}</span></button>`}
-function choose(n){let q=Q[idx],key=q[n+3];scores[key]++;history.push(key);idx++;if(idx<20)renderQ();else analyze()}
+function renderQ(){let q=Q[idx];qnum.textContent=idx+1;prog.style.width=((idx+1)/Q.length*100)+'%';qtitle.textContent=q[0];answers.innerHTML=`<button class="answer" onclick="choose(0)"><span class="letter">A</span><span class="atext">${q[1]}</span></button><button class="answer" onclick="choose(1)"><span class="letter">B</span><span class="atext">${q[2]}</span></button>`}
+function choose(n){let q=Q[idx],key=q[n+3];scores[key]++;history.push(key);idx++;if(idx<Q.length)renderQ();else analyze()}
 function prevQ(){if(idx===0){goStart();return}idx--;let k=history.pop();scores[k]--;renderQ()}
 function analyze(){show('loading');pct.textContent='0%';loadnote.textContent='당신과 닮은 식물을 찾고 있어요...';let bar=document.querySelector('.loadbar i');bar.style.animation='none';void bar.offsetWidth;bar.style.animation='load 5s linear forwards';let t=0;let timer=setInterval(()=>{t++;pct.textContent=Math.min(100,t*2)+'%';if(t===20)loadnote.textContent='당신의 성향을 살펴보는 중이에요...';if(t===38)loadnote.textContent='당신과 닮은 식물을 찾았어요!';if(t>=50){clearInterval(timer);renderResult()}},100)}
 function mbti(){return (scores.E>scores.I?'E':'I')+(scores.S>scores.N?'S':'N')+(scores.T>scores.F?'T':'F')+(scores.J>scores.P?'J':'P')}
