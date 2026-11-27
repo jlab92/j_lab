@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "캠퍼제이 답방 매니저",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "현재 열린 네이버 블로그 게시글을 읽어 댓글 초안을 작성",
   "permissions": [
     "storage",
@@ -12,7 +12,8 @@
   ],
   "host_permissions": [
     "https://blog.naver.com/*",
-    "https://m.blog.naver.com/*"
+    "https://m.blog.naver.com/*",
+    "https://api.openai.com/*"
   ],
   "action": {
     "default_title": "캠퍼제이 답방 매니저",
