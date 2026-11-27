@@ -141,3 +141,46 @@ async function readCurrentPost(){
 }
 $("auto").onclick=readCurrentPost;
 readCurrentPost();
+
+/* Optional AI writing with a user-supplied OpenAI API key. */
+async function aiComment(){
+  if(!current || !current.body || current.body.length<40){status("먼저 현재 글을 불러와 주세요.");return;}
+  const key=$("apiKey").value.trim();
+  if(!key.startsWith("sk-")){status("OpenAI API 키를 입력해 주세요. ChatGPT 구독과는 별개입니다.");return;}
+  const button=$("ai");button.disabled=true;status("원문을 읽고 자연스러운 감상 댓글을 작성하는 중…");
+  try{
+    await chrome.storage.session.set({camperjApiKey:key});
+    const tone=$("tone").value;
+    const instructions=[
+      "당신은 네이버 블로그에 자연스러운 한국어 답방 댓글을 쓰는 도우미다.",
+      "게시글에서 실제로 확인할 수 있는 구체적인 경험, 장소, 문제, 선택 등을 한 가지 이해한 후 그에 맞게 실용적인 반응이나 감상을 쓴다.",
+      "예: '캠핑장 사이트가 예상보다 좁다'는 경험에는 '여기는 큰 텐트보다 작은 텐트를 챙기는 게 낫겠네요ㅎㅎ'처럼 상황을 이해한 반응을 쓴다.",
+      "원문 표현을 따옴표로 인용하지 말고 요지만 자연스럽게 자신의 말로 표현하라.",
+      "'흥미진진하네요', '인상적이네요', '잘 읽고 갑니다', '좋은 정보 감사합니다' 같은 상투적인 말로 대체하지 말라.",
+      "글이나 사용자 정보에 없는 실제 방문 경험, 구매 경험, 개인 감정 또는 사건을 지어내지 않는다. 사진을 확인하지 않았다면 사진을 봤다고 말하지 않는다.",
+      "길이는 35~90자, 1~2문장. 질문은 자연스러운 경우에만 사용한다.",
+      "말투: "+(tone==="plain"?"담백한 존댓말":tone==="short"?"짧고 간결한 존댓말":"편안하고 친근한 블로그 존댓말, ㅎㅎ 등의 표현은 적절할 때만"),
+      "댓글만 출력하고 머리말, 따옴표, 해설, 후보 목록은 출력하지 않는다."
+    ].join("\n");
+    const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),25000);
+    let response;
+    try{
+      response=await fetch("https://api.openai.com/v1/responses",{
+        method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
+        body:JSON.stringify({model:"gpt-4.1-mini",instructions,input:"게시글 제목:\n"+(current.title||"")+"\n\n게시글 본문:\n"+current.body.slice(0,9000),max_output_tokens:170,store:false}),
+        signal:controller.signal
+      });
+    }finally{clearTimeout(timeout);}
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok)throw Error(data?.error?.message||("API 요청 실패 ("+response.status+")"));
+    const comment=(data.output||[]).filter(o=>o.type==="message").flatMap(o=>o.content||[]).filter(x=>x.type==="output_text").map(x=>x.text).join("\n").trim();
+    if(!comment)throw Error("댓글 내용을 받지 못했어요. 다시 시도해 주세요.");
+    $("reply").value=comment.replace(/^["“‘]|["”’]$/g,"");
+    status("AI 댓글 초안을 작성했어요. 실제 글과 맞는지 확인하고 직접 등록해 주세요.");
+  }catch(e){status(e.name==="AbortError"?"응답 시간이 초과됐어요. 다시 시도해 주세요.":(e.message||"AI 댓글 생성 실패"));}
+  finally{button.disabled=false;}
+}
+$("ai").onclick=aiComment;
+$("clearKey").onclick=async()=>{$("apiKey").value="";await chrome.storage.session.remove("camperjApiKey");status("API 키를 지웠어요.");};
+chrome.storage.session.get("camperjApiKey").then(({camperjApiKey})=>{if(camperjApiKey)$("apiKey").value=camperjApiKey;}).catch(()=>{});
