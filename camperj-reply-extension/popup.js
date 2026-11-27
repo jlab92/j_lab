@@ -49,3 +49,55 @@ $("copy").onclick=async()=>{let v=$("reply").value.trim();if(!v){status("복사�
 async function renderHistory(){let {history=[]}=await chrome.storage.local.get("history");$("history").replaceChildren();if(!history.length){$("history").textContent="아직 기록이 없어요.";return}history.slice(0,5).forEach(x=>{let div=document.createElement("div");div.style.marginTop="10px";let a=document.createElement("a");a.textContent=x.title||x.url;a.href=x.url;a.target="_blank";let small=document.createElement("div");small.textContent=new Date(x.date).toLocaleDateString("ko-KR");div.append(a,small);$("history").append(div)})}
 $("save").onclick=async()=>{if(!current||!$("reply").value.trim()){status("먼저 글을 불러오고 댓글을 작성해 주세요.");return}let {history=[]}=await chrome.storage.local.get("history");history=[{title:current.title,url:current.origin,reply:$("reply").value.trim(),date:new Date().toISOString()},...history.filter(x=>x.url!==current.origin)].slice(0,200);await chrome.storage.local.set({history});await renderHistory();status("답방 기록을 저장했어요. 댓글 게시 여부는 직접 확인해 주세요.")};
 renderHistory();
+
+/** 현재 탭과 각 iframe에서 현재 글 정보 조회. 네이버 화면의 URL 복사와 동일한 글번호를 찾기 위해 canonical, og:url, iframe 주소도 확인합니다. */
+function inspectCurrentFrame(){
+  const clean=s=>(s||"").replace(/\s+/g," ").trim();
+  let urls=[location.href];
+  for(const sel of ['link[rel="canonical"]','meta[property="og:url"]','meta[property="twitter:url"]']){
+    let e=document.querySelector(sel);if(e)urls.push(e.href||e.content||"");
+  }
+  let frame=document.querySelector('iframe#mainFrame,iframe[name="mainFrame"]');if(frame?.src)urls.push(frame.src);
+  const title=clean(document.querySelector('.se-title-text,.se_title,.pcol1 .htitle')?.textContent||document.querySelector('meta[property="og:title"]')?.content||document.title);
+  let body="",max=0;
+  for(let sel of [".se-main-container",".se_doc_viewer","#postViewArea","#viewTypeSelector",".se3_view",".post-view",".se_component_wrap"]){
+    let node=document.querySelector(sel);if(!node)continue;
+    let clone=node.cloneNode(true);clone.querySelectorAll("script,style,nav,footer,header,button,.se-oglink").forEach(n=>n.remove());
+    let val=clean(clone.innerText||clone.textContent);
+    if(val.length>max){max=val.length;body=val;}
+  }
+  if(body.length<40)body=clean([...document.querySelectorAll(".se-text-paragraph,.se_paragraph,.se-module-text,.se_textarea")].map(n=>n.textContent).join(" "));
+  return {urls,title,body:body.slice(0,12000)};
+}
+function findPostUrl(urls){
+  for(const value of urls){
+    try{return parseUrl(value)}catch{}
+  }
+  return null;
+}
+async function readCurrentPost(){
+  const button=$("auto");button.disabled=true;status("현재 열린 네이버 블로그 글을 확인하는 중…");
+  try{
+    const [tab]=await chrome.tabs.query({active:true,currentWindow:true});
+    if(!tab?.id||!/^https:\/\/(?:m\.)?blog\.naver\.com\//.test(tab.url||""))throw Error("네이버 블로그 게시글을 먼저 열어주세요.");
+    const frames=await chrome.scripting.executeScript({target:{tabId:tab.id,allFrames:true},func:inspectCurrentFrame});
+    const items=frames.map(x=>x.result).filter(Boolean);
+    const candidates=items.flatMap(x=>x.urls||[]);
+    // iframe은 대체로 실제 PostView.naver?blogId=...&logNo=... 주소를 포함합니다.
+    const u=findPostUrl(candidates);
+    if(!u)throw Error("실제 게시글 주소를 찾지 못했어요. 글 안의 ‘URL 복사’로 가져온 주소를 아래 칸에 붙여넣어 주세요.");
+    $("url").value=u.origin;
+    const best=items.filter(x=>x.body?.length>=40).sort((a,b)=>b.body.length-a.body.length)[0];
+    if(best){
+      current={...u,title:best.title||"게시글",body:best.body};variant=0;
+      $("title").textContent=current.title;$("excerpt").textContent=current.body.slice(0,210)+"…";generate();
+      status("현재 게시글 주소와 내용을 가져왔어요. 댓글 내용을 확인해 주세요.");
+    }else{
+      status("주소는 찾았지만 본문은 아직 읽지 못했어요. 공개 글 불러오기를 다시 시도해요.");
+      await $("load").onclick();
+    }
+  }catch(e){status(e.message||"현재 게시글을 읽지 못했어요.");}
+  finally{button.disabled=false}
+}
+$("auto").onclick=readCurrentPost;
+readCurrentPost();
