@@ -41,7 +41,47 @@ const rules=[
   {pattern:/장비|제품|구매|사용기|리뷰|후기|비교/,phrases:["직접 써보신 이야기가 도움이 되네요","장단점이 잘 보여서 참고하기 좋아요","사용 후기가 구체적이네요"]},
   {pattern:/강아지|고양이|반려|냥이/,phrases:["일상이 따뜻하게 느껴지네요","즐거운 순간이 담겨 있네요","사진에서 귀여움이 전해져요"]}
 ];
-function generate(){if(!current){status("먼저 게시글을 불러와 주세요.");return}let text=current.title+" "+current.body.slice(0,2500), selected=rules.find(r=>r.pattern.test(text));let phrases=selected?.phrases||["소개해주신 내용이 인상적이네요","읽으면서 새로운 정보를 알게 됐어요","정성스럽게 남겨주신 글 잘 봤어요"];let base=phrases[variant%phrases.length];$("reply").value=$("tone").value==="short"?base+"!":$("tone").value==="plain"?base+". 잘 읽었습니다.":base+"ㅎㅎ 잘 보고 갑니다!";status("글 내용에서 감지한 주제를 바탕으로 댓글을 제안했어요.")}
+function sentencesFromPost(text){
+  const cleaned=(text||"").replace(/https?:\/\/\S+/g," ").replace(/[#@][\w가-힣]+/g," ").replace(/[\u200b-\u200d]/g," ").replace(/\s+/g," ").trim();
+  return cleaned.split(/(?<=[.!?。])\s+|\s*[\n]+\s*/).flatMap(s=>s.length>85?s.split(/[,，;；]\s*/):[s]).map(s=>s.trim().replace(/^[\s•\-\d.)]+/,"")).filter(s=>s.length>=13&&s.length<=95);
+}
+function chooseDetails(post){
+  const title=(post.title||"").replace(/\s*[|｜].*$/,"").replace(/\s*[:│].*$/,"").trim();
+  const blacklist=/안녕하세요|방문해주셔서|잘 읽고|공감|서이추|댓글|이웃|협찬|광고|구매링크|수수료|제공받|도움이 되|포스팅|오늘은|알려드릴|소개해드릴|클릭|좋아요/;
+  let arr=[...new Set(sentencesFromPost(post.body))].filter(s=>!blacklist.test(s));
+  const tokens=[...new Set((title.match(/[가-힣A-Za-z0-9]{2,}/g)||[]).filter(w=>!/리뷰|후기|일상|기록|정보|블로그|추천|캠핑|가격|사용|방문/.test(w)))];
+  const score=s=>{
+    let n=0;
+    if(/[0-9]+(?:cm|m|kg|원|분|시간|번|인|박|일|도|%)/i.test(s))n+=3;
+    if(/생각보다|다만|아쉬|불편|좁|넓|좋았|편했|어려|편리|예쁘|만족|추천|특히|실제로|느꼈|차이|괜찮|의외|바람|풍경|경치|맛|향|조용|시끄럽|주차|설치|철수/.test(s))n+=3;
+    n+=Math.min(4,tokens.filter(t=>s.includes(t)).length*2);
+    if(s.length>=24&&s.length<=68)n+=2;
+    if(/합니다|습니다|했어요|더라고요|더라구요|했는데|였어요|이었어요|좋아요|있어요|없어요/.test(s))n++;
+    if(/문의|운영시간|주소|번호|전화|광고|예약|본 포스팅/.test(s))n-=5;
+    return n;
+  };
+  arr.sort((a,b)=>score(b)-score(a));
+  return arr.slice(0,5).filter(s=>score(s)>=2);
+}
+function detailToQuote(sentence){
+  return sentence.replace(/^[\s"'‘“]+|[\s.!?'"’”]+$/g,"").replace(/\s+/g," ").slice(0,66);
+}
+function generate(){
+  if(!current){status("먼저 게시글을 불러와 주세요.");return}
+  const details=chooseDetails(current);
+  if(!details.length){$("reply").value="";status("구체적인 내용을 추출하지 못했어요. 원문을 보고 직접 댓글을 작성해 주세요.");return}
+  const detail=detailToQuote(details[variant%details.length]);
+  const tone=$("tone").value;
+  const styles=[
+    "‘"+detail+"’라고 하신 부분이 특히 눈에 들어왔어요",
+    "‘"+detail+"’라는 경험을 보니 현장 분위기가 더 잘 느껴지네요",
+    "‘"+detail+"’라는 이야기가 기억에 남아요"
+  ];
+  const base=styles[Math.floor(variant/details.length)%styles.length];
+  $("reply").value=tone==="short"?"‘"+detail+"’ 부분이 기억에 남네요!":tone==="plain"?base+".":base+"ㅎㅎ";
+  status("본문의 구체적인 문장에 근거해 초안을 만들었어요. 인용 표현과 맥락이 자연스러운지 확인해 주세요.");
+}
+
 $("load").onclick=async()=>{const button=$("load");try{const u=parseUrl($("url").value);button.disabled=true;status("공개 게시글을 불러오는 중…");const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),12000);let response;try{response=await fetch(u.url,{signal:ctl.signal,credentials:"omit",redirect:"follow"})}finally{clearTimeout(t)}if(!response.ok)throw Error("네이버 응답 오류: "+response.status);let html=await response.text(),doc=new DOMParser().parseFromString(html,"text/html"),data=textFrom(doc);if(data.body.length<40)throw Error("본문을 확인하지 못했어요. 비공개 글이거나 네이버 페이지 구조가 다를 수 있습니다.");current={...u,...data};variant=0;$("title").textContent=data.title||"제목을 확인하지 못했어요.";$("excerpt").textContent=data.body.slice(0,210)+"…";generate();}catch(e){current=null;$("title").textContent="게시글을 불러오지 못했어요.";$("excerpt").textContent="";$("reply").value="";status(e.name==="AbortError"?"시간이 초과됐어요. 다시 시도해 주세요.":e.message||"불러오기 실패")}finally{button.disabled=false}};
 $("open").onclick=()=>{try{chrome.tabs.create({url:parseUrl($("url").value).origin})}catch(e){status(e.message)}};
 $("again").onclick=()=>{variant++;generate()};$("tone").onchange=()=>{if(current)generate()};
