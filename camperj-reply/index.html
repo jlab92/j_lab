@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>캠퍼제이 답방 매니저</title>
+<style>
+:root{font-family:system-ui,"Malgun Gothic",sans-serif;color:#23382e;background:#f5f7f2}*{box-sizing:border-box}body{margin:0}header{padding:30px max(20px,calc((100% - 1040px)/2));background:#244938;color:#fff}header small{letter-spacing:.15em;color:#c7e0cc}h1{margin:5px 0;font-size:28px}header p{margin:0;color:#e1eee2;font-size:14px}main{max-width:1080px;margin:24px auto;padding:0 20px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.card{background:white;border:1px solid #e0e8df;border-radius:16px;padding:22px;margin-bottom:18px;box-shadow:0 5px 24px #1b38200d}h2{font-size:18px;margin:0 0 14px}label{display:block;margin:14px 0 5px;font-size:13px;font-weight:700}input,textarea,select{font:inherit;color:inherit;width:100%;border:1px solid #cbd8cb;border-radius:9px;padding:10px 12px;background:white}textarea{resize:vertical;min-height:145px}input:focus,textarea:focus,select:focus{outline:2px solid #89ac97}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}button{cursor:pointer;padding:10px 13px;border-radius:9px;border:1px solid #cbd8cb;background:white;color:#244938;font:inherit;font-weight:700}button.primary{background:#276747;color:#fff;border-color:#276747}.hint{margin:14px 0 0;padding:12px;border-radius:9px;background:#fff8e8;color:#786442;font-size:12px}.sub{font-size:12px;color:#647669}.status{font-size:12px;color:#276747;min-height:20px;margin-top:12px}.record{display:flex;justify-content:space-between;gap:12px;border-top:1px solid #e8eee7;padding:14px 0}.record a{display:block;color:#26734b;font-size:12px;overflow-wrap:anywhere}.record p{font-size:12px;color:#66766a;margin:4px 0}.record strong{font-size:14px}footer{max-width:1080px;margin:auto;padding:0 20px 30px;color:#74837a;font-size:12px}@media(max-width:720px){.grid{grid-template-columns:1fr}.card{padding:17px}h1{font-size:23px}}
+</style></head><body>
+<header><small>CAMPER J · BLOG TOOL</small><h1>답방 매니저</h1><p>게시글을 확인하고, 자연스러운 댓글 초안을 만들어 답방 기록을 관리해요.</p></header>
+<main><div class="grid"><section class="card">
+<h2>01. 게시글 정보</h2>
+<label for="url">답방할 게시글 URL</label><input id="url" type="url" placeholder="https://blog.naver.com/아이디/게시글번호">
+<div class="actions"><button id="open">게시글 열기 ↗</button><button id="check">답방 기록 확인</button></div>
+<label for="title">게시글 제목</label><input id="title" placeholder="선택 입력">
+<label for="content">게시글 내용</label><textarea id="content" placeholder="상대방의 공개 게시글에서 중요한 문단을 붙여넣어 주세요.&#10;네이버 글을 자동으로 수집하지 않습니다."></textarea>
+<p class="sub">글을 읽을 수 있는 경우에만 내용에 맞는 댓글을 작성해 주세요.</p></section>
+<section class="card">
+<h2>02. 댓글 초안 만들기</h2>
+<label for="tone">말투</label><select id="tone"><option value="friendly">친근하게 (ㅎㅎ)</option><option value="calm">담백하게</option><option value="short">짧게</option></select>
+<label for="focus">특히 언급할 부분 (선택)</label><input id="focus" placeholder="예: 단풍 풍경, 깔끔한 사이트">
+<div class="actions"><button class="primary" id="generate">댓글 초안 만들기</button><button id="again">다른 문구</button></div>
+<label for="reply">댓글 초안 · 직접 수정 가능</label><textarea id="reply" placeholder="게시글 정보를 입력하면 댓글이 표시됩니다."></textarea>
+<div class="actions"><button class="primary" id="copy">댓글 복사</button><button id="save">답방 완료 저장</button></div>
+<div id="notice" class="status" role="status" aria-live="polite"></div>
+<p class="hint">이 버전은 설치·API 키가 필요 없는 키워드 기반 댓글 추천기입니다. 글을 깊이 이해하는 AI는 아니며, 네이버에 자동으로 댓글을 게시하지 않습니다. 댓글은 실제 글과 맞는지 확인 후 직접 등록하세요.</p></section></div>
+<section class="card"><h2>03. 답방 기록</h2><p class="sub">기록은 이 브라우저에만 저장됩니다. 다른 컴퓨터에서는 기록 백업을 불러오세요.</p>
+<div class="actions"><button id="export">백업 내보내기</button><button id="importBtn">백업 불러오기</button><input id="importFile" type="file" accept=".json,application/json" hidden></div><div id="records"></div></section></main>
+<footer>캠퍼제이 답방 매니저 v1.0 · 네이버 공식 서비스가 아닌 개인용 도구입니다.</footer>
+<script>
+"use strict";
+const $=x=>document.getElementById(x), KEY="camperj_reply_records_v1";let variant=0;
+const notify=s=>$("notice").textContent=s;
+function normalize(s){try{const u=new URL(s.trim());return ["https:","http:"].includes(u.protocol)?u.origin+u.pathname.replace(/\/$/,""):""}catch{return ""}}
+function records(){try{let x=JSON.parse(localStorage.getItem(KEY)||"[]");return Array.isArray(x)?x:[]}catch{return []}}
+function store(x){try{localStorage.setItem(KEY,JSON.stringify(x));return true}catch{notify("저장에 실패했어요. 브라우저 저장소를 확인해 주세요.");return false}}
+function choices(s){let rules=[[/캠핑장|사이트|데크|파쇄석|텐트|캠핑|차박|피칭/,["캠핑장 분위기가 잘 전해지네요","캠핑 장소 고를 때 참고하기 좋겠어요","캠핑 기록이 생생하게 느껴져요"]],[/맛집|음식|카페|커피|식당|빵|디저트|레시피/,["사진만 봐도 맛있어 보여요","메뉴 고를 때 참고하기 좋겠어요","먹거리 소개가 정말 알차네요"]],[/여행|숙소|호텔|풍경|바다|산책|단풍|꽃|노을|일출/,["풍경 이야기가 인상적이네요","여행 분위기가 잘 전해져요","소개해주신 장소가 기억에 남아요"]],[/장비|제품|구매|사용기|리뷰|후기|비교/,["직접 써보신 이야기가 도움이 되네요","장단점이 잘 보여서 참고하기 좋아요","사용 후기가 구체적이네요"]],[/반려|강아지|고양이|냥이/,["즐거운 순간이 담겨 있네요","사진에서 귀여움이 전해져요","일상이 따뜻하게 느껴지네요"]]];return (rules.find(x=>x[0].test(s))||[0,["소개해주신 내용이 인상적이네요","읽으면서 새로운 정보를 알게 됐어요","정성스럽게 남겨주신 글 잘 봤어요"]])[1]}
+function build(){let s=($("title").value+" "+$("content").value).trim(),f=$("focus").value.trim().replace(/[\r\n]/g," ").slice(0,28);if(!s&&!f){notify("글 제목이나 내용을 먼저 입력해 주세요.");return}let v=choices(s)[variant%3];if(f)v=[f+" 부분이 특히 인상적이네요",f+" 이야기가 눈에 들어왔어요",f+" 덕분에 재미있게 봤어요"][variant%3];let tone=$("tone").value;$("reply").value=tone==="short"?v+"!":tone==="calm"?v+". 잘 읽었습니다.":v+"ㅎㅎ 잘 보고 갑니다!";notify("초안을 만들었어요. 게시글 내용과 맞는지 확인해 주세요.")}
+$("generate").onclick=()=>{variant=0;build()};$("again").onclick=()=>{variant++;build()};
+$("open").onclick=()=>{let u=normalize($("url").value);if(!u){notify("올바른 게시글 URL을 입력해 주세요.");return}window.open(u,"_blank","noopener,noreferrer")};
+$("check").onclick=()=>{let u=normalize($("url").value);if(!u){notify("게시글 주소를 입력해 주세요.");return}let x=records().find(r=>r.url===u);notify(x?"답방 기록이 있어요. ("+new Date(x.date).toLocaleString("ko-KR")+")":"아직 답방 기록이 없어요.")};
+$("copy").onclick=async()=>{let v=$("reply").value.trim();if(!v){notify("복사할 댓글이 없어요.");return}try{await navigator.clipboard.writeText(v);notify("댓글을 복사했어요. 네이버 블로그에서 직접 등록해 주세요.")}catch{$("reply").focus();$("reply").select();notify("선택된 내용을 Ctrl+C로 복사해 주세요.")}};
+$("save").onclick=()=>{let u=normalize($("url").value),reply=$("reply").value.trim();if(!u||!reply){notify("게시글 URL과 댓글이 필요해요.");return}let data=records().filter(r=>r.url!==u);data.unshift({url:u,title:$("title").value.trim().slice(0,150),reply:reply.slice(0,500),date:new Date().toISOString()});if(store(data)){render();notify("기록을 저장했어요. 실제 댓글은 직접 등록해 주세요.")}};
+function render(){let el=$("records");el.replaceChildren();let data=records();if(!data.length){let p=document.createElement("p");p.className="sub";p.textContent="아직 답방 기록이 없어요.";el.append(p);return}data.forEach((r,i)=>{let box=document.createElement("div");box.className="record";let info=document.createElement("div");info.style.minWidth="0";let t=document.createElement("strong");t.textContent=r.title||"제목 없는 글";let a=document.createElement("a");a.href=r.url;a.textContent=r.url;a.target="_blank";a.rel="noopener noreferrer";let p=document.createElement("p");p.textContent=new Date(r.date).toLocaleString("ko-KR")+" · "+r.reply;info.append(t,a,p);let b=document.createElement("button");b.textContent="삭제";b.onclick=()=>{if(confirm("이 기록을 삭제할까요?")){let d=records();d.splice(i,1);store(d);render()}};box.append(info,b);el.append(box)})}
+$("export").onclick=()=>{let b=new Blob([JSON.stringify({app:"camperj-reply-manager",version:1,records:records()},null,2)],{type:"application/json"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="camperj-reply-backup.json";a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)};
+$("importBtn").onclick=()=>$("importFile").click();$("importFile").onchange=async e=>{let f=e.target.files?.[0];if(!f)return;try{let o=JSON.parse(await f.text());if(o.app!=="camperj-reply-manager"||!Array.isArray(o.records))throw Error();let data=o.records.filter(r=>r&&normalize(r.url||"")&&typeof r.reply==="string").slice(0,3000).map(r=>({url:normalize(r.url),title:String(r.title||"").slice(0,150),reply:r.reply.slice(0,500),date:!isNaN(Date.parse(r.date))?r.date:new Date().toISOString()}));if(confirm(data.length+"건의 기록으로 현재 기록을 교체할까요?")&&store(data)){render();notify("백업을 복원했어요.")}}catch{notify("올바른 백업 파일이 아닙니다.")}e.target.value=""};
+render();
+</script></body></html>
