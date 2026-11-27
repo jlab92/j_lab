@@ -13,7 +13,7 @@ function parseUrl(value){
 function clean(s){return (s||"").replace(/\u00a0/g," ").replace(/[ \t]+/g," ").replace(/\n[\s\n]+/g,"\n").trim()}
 function textFrom(doc){
   let title=clean(doc.querySelector('meta[property="og:title"]')?.content||doc.querySelector(".se-title-text")?.textContent||doc.title||"");
-  let nodes=[...doc.querySelectorAll(".se-main-container, .se_doc_viewer, #postViewArea, .post-view, .se_component_wrap")];
+  let nodes=[...doc.querySelectorAll(".se-main-container, .se_doc_viewer, #postViewArea, #viewTypeSelector, .se3_view, .post-view, .se_component_wrap")];
   // Parent/child nodes overlap: prefer the first complete document container.
   let chosen=nodes.find(n=>clean(n.innerText||n.textContent).length>80);
   let body="";
@@ -23,11 +23,15 @@ function textFrom(doc){
     body=clean(clone.textContent);
   }
   if(body.length<40){
-    let paras=[...doc.querySelectorAll(".se-text-paragraph,.se_paragraph,.se-module-text,p")].map(n=>clean(n.textContent)).filter(s=>s.length>5);
+    let paras=[...doc.querySelectorAll(".se-text-paragraph,.se_paragraph,.se-module-text,.se_textarea,p")].map(n=>clean(n.textContent)).filter(s=>s.length>5);
     body=clean([...new Set(paras)].join("\n"));
   }
   const description=clean(doc.querySelector('meta[property="og:description"]')?.content||doc.querySelector('meta[name="description"]')?.content||"");
   if(body.length<40&&description.length>=30)body=description;
+// 네이버 로그인/오류 화면은 게시글 본문으로 처리하지 않습니다.
+const pageTitle=clean(doc.title||"");
+if(/로그인|존재하지 않는|접근이 제한|권한이 없|삭제된 게시글/.test(pageTitle)&&body.length<100)body="";
+
   return {title,body:body.slice(0,12000)};
 }
 const rules=[
